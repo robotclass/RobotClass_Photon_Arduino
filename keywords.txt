@@ -1,0 +1,11 @@
+# Syntax Coloring Map For RobotClass Photon
+
+# Datatypes (KEYWORD1)
+RobotClass_Photon	KEYWORD1
+RobotClass_PhElement	KEYWORD1
+RobotClass_PhHardware	KEYWORD1
+
+# Constants (LITERAL1)
+PH_DEFAULT_BAUD	LITERAL1
+PH_HWIF_UART	LITERAL1
+PH_HWIF_I2C	LITERAL1
