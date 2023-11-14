@@ -12,15 +12,18 @@
 
 typedef void (*PhTouchEventCb)();
 
-class Element{
+class PhElement{
 	public:
 		PhTouchEventCb _cb_push;
 		PhTouchEventCb _cb_pop;
 
-		Element( PhHardware* hw, uint8_t pid, uint8_t id, uint8_t type, uint8_t touch );
+		PhElement( PhHardware* hw, uint8_t pid, uint8_t id, uint8_t type, uint8_t touch );
 		uint16_t getValue(char *buf, uint16_t len);
-		bool setValue(const char *buf);
-		bool setValue(uint32_t v);
+		uint8_t setValue(const char *buf);
+		uint8_t setValue(int32_t v);
+		uint8_t setValue(int16_t v) {return setValue((int32_t)v);};
+		uint8_t setValue(int8_t v) {return setValue((int32_t)v);};
+		uint8_t setValue(float v, uint8_t width = 4, uint8_t precision = 2);
 
 		uint8_t getId();
 		uint8_t getPid();

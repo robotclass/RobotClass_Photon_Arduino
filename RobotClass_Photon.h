@@ -1,4 +1,4 @@
-#include <Arduino.h>
+//#include <Arduino.h>
 #include "PhHardware.h"
 #include "PhElement.h"
 
@@ -14,20 +14,25 @@
 
 class RobotClass_Photon;
 
-class RobotClass_Photon{
+class RobotClass_Photon: public PhHardware{
 	public:
-		RobotClass_Photon( uint8_t hwif = PH_HWIF_UART, HardwareSerial *serial = &Serial );
-		void begin( uint32_t v = PH_DEFAULT_BAUD );
+		RobotClass_Photon();
+		void begin( TwoWire *wire = &Wire, uint8_t addr = PH_DEFAULT_ADDR );
+		void begin( Stream *serial );
+		void beginDebug( Stream *serial );
+
 		void handle();
 
-		Element& registerElement( uint8_t pid, uint8_t id, uint8_t type, uint8_t touch = DISABLE_TOUCH );
+		PhElement& registerElement( uint8_t pid, uint8_t id, uint8_t type, uint8_t touch = DISABLE_TOUCH );
 
 		uint8_t setPage( uint8_t page );
+		uint8_t getPage();
+		uint8_t reset();
 
 	private:
-		PhHardware *_hw = NULL;
+		PhHardware *_hw = nullptr;
 
-		Element** _elements = NULL;
+		PhElement** _elements = nullptr;
 		uint8_t _elements_n = 0;
 
 		uint8_t _page = 0;

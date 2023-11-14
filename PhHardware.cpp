@@ -6,19 +6,58 @@
  */
 #include "PhHardware.h"
 
-PhHardware::PhHardware( uint8_t hwif, HardwareSerial *serial ){
-  _hwif = hwif;
-  _serial_hs = serial;
+PhHardware::PhHardware(){
 }
 
-void PhHardware::begin( uint32_t v ){
-    switch( _hwif ){
-	case PH_HWIF_UART:
-		_serial_hs->begin(v);
-		break;
-	case PH_HWIF_I2C:
-		break;
-    }
+void PhHardware::begin( TwoWire *wire, uint8_t addr ){
+	_hwif = PH_HWIF_I2C;
+	_wire = wire;
+	_i2c_addr = addr;
+}
+
+void PhHardware::begin( Stream *serial ){
+	_serial = serial;
+}
+
+void PhHardware::beginDebug( Stream *serial ){
+	_serial_debug = serial;
+}
+
+void PhHardware::printDebug( const char* msg ){
+	if(_serial_debug != nullptr){
+		_serial_debug->println(msg);
+	}
+}
+
+uint8_t PhHardware::isDebug(){
+	return _serial_debug != nullptr;
+}
+
+uint8_t PhHardware::isUART(){
+	return _hwif == PH_HWIF_UART;
+}
+
+uint8_t PhHardware::isI2C(){
+	return _hwif == PH_HWIF_I2C;
+}
+
+uint8_t PhHardware::readUART( uint8_t* buf ){
+	uint8_t count = 0;
+	if( _serial->available() ){
+		delay(10);
+		while( _serial->available() ) buf[count++] = _serial->read();
+	}
+	return count;
+}
+
+uint8_t PhHardware::readI2C( uint8_t* buf ){
+	uint8_t count = 0;
+	if( _serial->available() ){
+		delay(10);
+		while( _wire->available() ) buf[count++] = _wire->read();
+	}
+
+	return count;
 }
 
 uint8_t PhHardware::readCommands( uint8_t& eid, uint8_t& cmd ){
@@ -26,22 +65,18 @@ uint8_t PhHardware::readCommands( uint8_t& eid, uint8_t& cmd ){
 
     eid = 0xFF;
 
-	uint8_t idx = 0;
-    if( _hwif == PH_HWIF_UART ){
-		if( _serial_hs->available() ){
-			delay(10);
-			while( _serial_hs->available() ){
-				buf[idx] = _serial_hs->read();
-				idx++;
-			}
-		}
-	}
-
-	if( !idx ){
+	uint8_t count = 0;
+	if( _hwif == PH_HWIF_UART ){
+		count = readUART( buf );
+	} else {
 		return 0;
 	}
-	for( uint8_t k=0; k<idx; k++ ){
-		if( buf[k] == 0xFF && (k+3)<idx && buf[k+1] == 0xFF ){
+
+	if( !count ){
+		return 0;
+	}
+	for( uint8_t k=0; k<count; k++ ){
+		if( buf[k] == 0xFF && (k+3)<count && buf[k+1] == 0xFF ){
 			cmd = buf[k+2];
 			if( cmd == CMD_EVENT_PUSH || cmd == CMD_EVENT_POP ){
 				eid = buf[k+3];
@@ -52,21 +87,34 @@ uint8_t PhHardware::readCommands( uint8_t& eid, uint8_t& cmd ){
 	return 0;
 }
 
-void PhHardware::sendCommand( const char* cmd ){
-    if( _hwif == PH_HWIF_UART ){
-		while( _serial_hs->available() ){
-			_serial_hs->read();
-		}
+uint8_t PhHardware::sendCommandUART( const char* buf ){
+	while( _serial->available() ){
+		_serial->read();
+	}
     
-		_serial_hs->write(cmd);
-    }
+	_serial->write(buf);
+
+	return getResponse();
 }
 
-bool PhHardware::getResponse(){    
+uint8_t PhHardware::sendCommandI2C( const uint8_t *buf, uint8_t size ){
+	if( isDebug() ){
+		char str[32];
+		sprintf(str, "i2c:%02x/%02x", _i2c_addr, buf[0]);
+		printDebug(str);
+	}
+	_wire->beginTransmission(_i2c_addr);
+	_wire->write(buf, size);
+	_status = _wire->endTransmission();
+	return (_status == 0);
+}
+
+bool PhHardware::getResponse( uint32_t timeout ){
     bool ret = false;
     uint8_t buf[3] = {0};
     
-    if( sizeof(buf) != _serial_hs->readBytes( (char *)buf, sizeof(buf) )){
+	_serial->setTimeout(timeout);
+    if( sizeof(buf) != _serial->readBytes( (char *)buf, sizeof(buf) )){
         ret = false;
     }
 

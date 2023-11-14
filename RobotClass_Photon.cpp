@@ -6,12 +6,20 @@
  */
 #include "RobotClass_Photon.h"
 
-RobotClass_Photon::RobotClass_Photon( uint8_t hwif, HardwareSerial *serial ){
-	_hw = new PhHardware( hwif, serial );
+RobotClass_Photon::RobotClass_Photon(){
+	_hw = new PhHardware();
 }
 
-void RobotClass_Photon::begin( uint32_t v ){
-	_hw->begin(v);
+void RobotClass_Photon::begin( TwoWire *wire, uint8_t addr ){
+	_hw->begin( wire, addr );
+}
+
+void RobotClass_Photon::begin( Stream *serial ){
+	_hw->begin( serial );
+}
+
+void RobotClass_Photon::beginDebug( Stream *serial ){
+	_hw->beginDebug( serial );
 }
 
 void RobotClass_Photon::handle(){
@@ -33,13 +41,13 @@ void RobotClass_Photon::handle(){
 	}
 }
 
-Element& RobotClass_Photon::registerElement( uint8_t pid, uint8_t id, uint8_t type, uint8_t touch ){
-    Element **tmp = new Element*[_elements_n+1];
+PhElement& RobotClass_Photon::registerElement( uint8_t pid, uint8_t id, uint8_t type, uint8_t touch ){
+    PhElement **tmp = new PhElement*[_elements_n+1];
     for( uint8_t i=0; i<_elements_n; i++){
         tmp[i] = _elements[i];
     }
     
-    tmp[_elements_n] = new Element( _hw, pid, id, type, touch );
+    tmp[_elements_n] = new PhElement( _hw, pid, id, type, touch );
     _elements = tmp;
 
     _elements_n++;
@@ -47,22 +55,60 @@ Element& RobotClass_Photon::registerElement( uint8_t pid, uint8_t id, uint8_t ty
 }
 
 uint8_t RobotClass_Photon::setPage( uint8_t page ){
+	_hw->printDebug("ph set page");
+
 	_page = page;
 
-    String cmd;
+	if( _hw->isUART() ){
+		String cmd;
 
-    if( page<10 ){
-      cmd += "00";
-    } else
-    if( page<100 ){
-      cmd += "0";
-    }
-    cmd += String(page);
-    
-    cmd += ".p";
-    _hw->sendCommand(cmd.c_str());
-	
-	return _hw->getResponse();
+		if( page<10 ){
+			cmd += "00";
+		} else
+		if( page<100 ){
+			cmd += "0";
+		}
+		cmd += String(page);
+		cmd += ".p";
+
+		return _hw->sendCommandUART(cmd.c_str());
+
+	} else {
+		uint8_t cmd[2];
+
+		cmd[0] = CMD_SET_PAGE;
+		cmd[1] = page;
+
+		return _hw->sendCommandI2C(cmd, 2);
+	}
 }
 
+uint8_t RobotClass_Photon::getPage(){
+	if( _hw->isUART() ){
+		String cmd = "page";
+		return _hw->sendCommandUART(cmd.c_str());
+
+	} else {
+		uint8_t cmd[1];
+
+		cmd[0] = CMD_GET_PAGE;
+
+		return _hw->sendCommandI2C(cmd, 1);		
+	}
+}
+
+uint8_t RobotClass_Photon::reset(){
+	_hw->printDebug("ph reset");
+	if( _hw->isUART() ){
+		String cmd = "reset";
+		return _hw->sendCommandUART(cmd.c_str());
+
+	} else {
+		uint8_t cmd[1];
+
+		cmd[0] = CMD_RESET;
+
+		return _hw->sendCommandI2C(cmd, 1);		
+	}
+}
 
