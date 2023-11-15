@@ -24,6 +24,7 @@ class PhElement{
 		uint8_t setValue(int16_t v) {return setValue((int32_t)v);};
 		uint8_t setValue(int8_t v) {return setValue((int32_t)v);};
 		uint8_t setValue(float v, uint8_t width = 4, uint8_t precision = 2);
+		uint8_t setValue(double v, uint8_t width = 4, uint8_t precision = 2) {return setValue((float)v);};
 
 		uint8_t getId();
 		uint8_t getPid();

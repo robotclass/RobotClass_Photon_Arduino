@@ -16,6 +16,7 @@ void PhHardware::begin( TwoWire *wire, uint8_t addr ){
 }
 
 void PhHardware::begin( Stream *serial ){
+	_hwif = PH_HWIF_UART;
 	_serial = serial;
 }
 

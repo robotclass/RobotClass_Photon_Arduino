@@ -55,10 +55,10 @@ uint8_t PhElement::setValue(const char *buf){
 
 		cmd[0] = CMD_SET_STR;
 		cmd[1] = _id;
-		for( uint8_t i=0; i<count; i++ ){
+		for( uint8_t i=0; i<count+1; i++ ){
 			cmd[i+2] = buf[i];
 		}
-		cmd[i+2] = 0x00;
+		//cmd[i+2] = 0x00;
 		
 		return _hw->sendCommandI2C(cmd, count+3);
 	}
