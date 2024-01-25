@@ -26,7 +26,8 @@ class RobotClass_Photon: public PhHardware{
 		PhElement& registerElement( uint8_t pid, uint8_t id, uint8_t type, uint8_t touch = DISABLE_TOUCH );
 
 		uint8_t setPage( uint8_t page );
-		uint8_t getPage();
+		uint8_t getPage( uint16_t *value );
+		uint8_t getVersion( uint16_t *value );
 		uint8_t reset();
 
 	private:

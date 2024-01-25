@@ -46,7 +46,7 @@ uint8_t PhElement::setValue(const char *buf){
 		cmd += buf;
 		cmd += "\"";
 
-		return _hw->sendCommandUART(cmd.c_str());
+		return _hw->writeCommandUART(cmd.c_str());
 
 	} else {
 
@@ -60,7 +60,7 @@ uint8_t PhElement::setValue(const char *buf){
 		}
 		//cmd[i+2] = 0x00;
 		
-		return _hw->sendCommandI2C(cmd, count+3);
+		return _hw->writeCommandI2C(cmd, count+3);
 	}
 }
 
@@ -83,7 +83,7 @@ uint8_t PhElement::setValue(int32_t v){
 		cmd[4] = (v>>16) & 0xFF;
 		cmd[5] = (v>>24) & 0xFF;
 
-		return _hw->sendCommandI2C(cmd, 6);
+		return _hw->writeCommandI2C(cmd, 6);
 	}
 }
 
@@ -118,7 +118,7 @@ uint8_t PhElement::setValue(float v, uint8_t width, uint8_t precision){
 		cmd[6] = fbuf[2];
 		cmd[7] = fbuf[3];
 
-		return _hw->sendCommandI2C(cmd, 8);
+		return _hw->writeCommandI2C(cmd, 8);
 	}
 }
 

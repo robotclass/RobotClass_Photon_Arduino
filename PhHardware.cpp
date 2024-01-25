@@ -51,16 +51,6 @@ uint8_t PhHardware::readUART( uint8_t* buf ){
 	return count;
 }
 
-uint8_t PhHardware::readI2C( uint8_t* buf ){
-	uint8_t count = 0;
-	if( _serial->available() ){
-		delay(10);
-		while( _wire->available() ) buf[count++] = _wire->read();
-	}
-
-	return count;
-}
-
 uint8_t PhHardware::readCommands( uint8_t& eid, uint8_t& cmd ){
     static uint8_t buf[16];
 
@@ -76,6 +66,7 @@ uint8_t PhHardware::readCommands( uint8_t& eid, uint8_t& cmd ){
 	if( !count ){
 		return 0;
 	}
+
 	for( uint8_t k=0; k<count; k++ ){
 		if( buf[k] == 0xFF && (k+3)<count && buf[k+1] == 0xFF ){
 			cmd = buf[k+2];
@@ -88,7 +79,7 @@ uint8_t PhHardware::readCommands( uint8_t& eid, uint8_t& cmd ){
 	return 0;
 }
 
-uint8_t PhHardware::sendCommandUART( const char* buf ){
+uint8_t PhHardware::writeCommandUART( const char* buf ){
 	while( _serial->available() ){
 		_serial->read();
 	}
@@ -98,10 +89,21 @@ uint8_t PhHardware::sendCommandUART( const char* buf ){
 	return getResponse();
 }
 
-uint8_t PhHardware::sendCommandI2C( const uint8_t *buf, uint8_t size ){
+uint8_t PhHardware::readCommandUART( const char* buf, uint8_t *data, uint8_t dsize ){
+	while( _serial->available() ){
+		_serial->read();
+	}
+    
+	_serial->write(buf);
+	
+	//_serial->setTimeout(timeout);
+	return _serial->readBytes( data, dsize ) == dsize;
+}
+
+uint8_t PhHardware::writeCommandI2C( const uint8_t *buf, uint8_t size ){
 	if( isDebug() ){
 		char str[32];
-		sprintf(str, "i2c:%02x/%02x", _i2c_addr, buf[0]);
+		sprintf(str, "write i2c:%02x/%02x", _i2c_addr, buf[0]);
 		printDebug(str);
 	}
 	_wire->beginTransmission(_i2c_addr);
@@ -109,6 +111,22 @@ uint8_t PhHardware::sendCommandI2C( const uint8_t *buf, uint8_t size ){
 	_status = _wire->endTransmission();
 	return (_status == 0);
 }
+
+uint8_t PhHardware::readCommandI2C( const uint8_t *buf, uint8_t size, uint8_t *data, const uint8_t dsize ){
+	if( isDebug() ){
+		char str[32];
+		sprintf(str, "read i2c:%02x/%02x", _i2c_addr, buf[0]);
+		printDebug(str);
+	}
+	_wire->beginTransmission(_i2c_addr);
+	_wire->write(buf, size);
+	_status = _wire->endTransmission();
+
+	_wire->requestFrom(_i2c_addr, dsize);
+	int8_t count = 0;
+	while (_wire->available()) data[count++] = _wire->read();
+	return count == dsize;
+}	
 
 bool PhHardware::getResponse( uint32_t timeout ){
     bool ret = false;

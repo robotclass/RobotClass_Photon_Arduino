@@ -30,7 +30,9 @@
 #define CMD_SET_FLOAT 0xC1
 #define CMD_SET_STR 0xC2
 #define CMD_SET_PAGE 0xC3
-#define CMD_GET_PAGE 0xD3
+
+#define CMD_GET_VERSION 0xD0
+#define CMD_GET_PAGE 0xD1
 
 class PhHardware{
 	private:
@@ -52,11 +54,12 @@ class PhHardware{
 		uint8_t isUART();
 		uint8_t isI2C();
 		uint8_t readUART( uint8_t* buf );
-		uint8_t readI2C( uint8_t* buf );
 
 		uint8_t readCommands( uint8_t& eid, uint8_t& cmd );
-		uint8_t sendCommandUART( const char* buf );
-		uint8_t sendCommandI2C( const uint8_t *buf, uint8_t size );
+		uint8_t writeCommandUART( const char* buf );
+		uint8_t readCommandUART( const char* buf, uint8_t *data, uint8_t dsize );
+		uint8_t writeCommandI2C( const uint8_t *buf, uint8_t size );
+		uint8_t readCommandI2C( const uint8_t *buf, uint8_t size, uint8_t *data, uint8_t dsize );
 		bool getResponse( uint32_t timeout = 100 );
 };
 
